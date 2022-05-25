@@ -102,7 +102,7 @@ a, a:hover, a:focus, a:active {
                 <div class="row ">
                   <?php
                   if(empty($releases['data'])){
-                    echo '<p class="lead text-danger text-center">You haven\'t created a release yet, <a class="text-dark" style="text-decoration: underline;" href="index.php/Dash/release_create">create one now</a></p>';
+                    echo '<p class="lead text-danger text-center">You haven\'t created a release yet, <a class="text-dark" style="text-decoration: underline;" href="index.php/createrelease">create one now</a></p>';
                   }
                   else{
                     foreach($releases['data'] as $row){
