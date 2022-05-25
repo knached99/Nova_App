@@ -30,7 +30,7 @@ class Register extends CI_Controller {
         $this->form_validation->set_rules('artist_account_password', 'Password', 'required|trim|regex_match[/^(?=.*[!@#$%^&*-])(?=.*[0-9])(?=.*[A-Z]).{8,20}$/]', array('required' => 'Please enter a secure password', 'regex_match'=>'The password must meet the following constraints: at least 8 characters in length, one uppercase letter, one number, and one symbol'));
         $this->form_validation->set_rules('artist_account_password_confirm', 'Confirm Password', 'required|trim|matches[artist_account_password]', array('required' => 'Please verify your password', 'matches'=>'both passwords must match'));
         $this->form_validation->set_rules('artist_account_terms_agreement', 'Terms', 'required', array('required'=>'You must agree to the terms and conditions'));
-        $this->form_validation->set_message('artist_account_is_unique',    'This %s is already associated with a Nova account');
+        $this->form_validation->set_message('is_unique',    'This %s is already associated with a Nova account');
 
         if ($this->form_validation->run()==FALSE){
             $this->load->view('signup');
