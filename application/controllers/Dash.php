@@ -208,7 +208,7 @@ class Dash extends CI_Controller {
 			$uploadData = $this->upload->data();
 			$release_artwork =  '/releases/artwork/'.$uploadData['file_name'];
 			 if(implode('', $uploadData)=='./releases/artwork/./releases/artwork/'){
-			   $artwork = $release->release_artwork;
+			   $artwork = $release_art;
 			 }
 			else{
 			  $artwork = $release_artwork;
