@@ -177,6 +177,7 @@ class Dash extends CI_Controller {
 	public function save_release($id){
 		$this->load->helper(array('url', 'form'));
 		$this->load->model('Artist_Model');
+		$release = $this->Artist_Model->release($id);
 		$config['upload_path']          = './releases/artwork/';
 		$config['allowed_types']        = 'jpg|jpeg';
 		$config['max_size']             = 32000;
@@ -206,13 +207,15 @@ class Dash extends CI_Controller {
 			$release_art = $this->Artist_Model->release($id)->release_artwork;
 			$uploadData = $this->upload->data();
 			$release_artwork =  '/releases/artwork/'.$uploadData['file_name'];
-			// Feature to implement -> still finding a way to not get rid of exisiting release artwork if no file is provided
-			// How it works -> If the artist did not provide an image then use the one that's currently in the DB
-			// Otherwise upload the one they choose. 
-			// This is still not working for me 
+			 if(implode('', $uploadData)=='./releases/artwork/./releases/artwork/'){
+			   $artwork = $release->release_artwork;
+			 }
+			else{
+			  $artwork = $release_artwork;
+			}
 			$data = array(
 				'release_id'=>$id,
-				'release_artwork'=> $release_artwork,
+				'release_artwork'=> $artwork,
 				'release_type'=>$this->input->post('release_type'),
 				'release_name'=>$this->input->post('release_title'),
 				'release_date'=>$this->input->post('release_date'),
