@@ -75,10 +75,10 @@ $query_builder = TRUE;
 
 $db['default'] = array(
 	'dsn'	=> '',
-	'hostname' => 'db5005939174.hosting-data.io',
-	'username' => 'dbu1069329',
-	'password' => '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',
-	'database' => 'dbs4977507',
+	'hostname' => 'localhost',
+	'username' => 'root',
+	'password' => 'root',
+	'database' => 'Nova',
 	'dbdriver' => 'mysqli',
 	'dbprefix' => '',
 	'pconnect' => FALSE,
