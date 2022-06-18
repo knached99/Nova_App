@@ -74,11 +74,11 @@ $active_group = 'default';
 $query_builder = TRUE;
 
 $db['default'] = array(
-	'dsn'	=> '', // These details are not shown for privacy reasons
-	'hostname' => '',
-	'username' => '',
-	'password' => '',
-	'database' => '',
+	'dsn'	=> '',
+	'hostname' => 'db5005939174.hosting-data.io',
+	'username' => 'dbu1069329',
+	'password' => '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',
+	'database' => 'dbs4977507',
 	'dbdriver' => 'mysqli',
 	'dbprefix' => '',
 	'pconnect' => FALSE,

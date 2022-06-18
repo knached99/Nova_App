@@ -21,6 +21,7 @@ class Register extends CI_Controller {
 	public function signup()
 	{
         $this->load->library('form_validation');
+        $this->load->library('user_agent');
         $this->load->helper('url');
         $this->load->model('Artist_Model');
         $this->form_validation->set_rules('artist_account_name_artist','artist name','required|is_unique[Artists_Table.artist_account_name_artist]', array('required' => 'Please enter your artist name'));
@@ -33,25 +34,39 @@ class Register extends CI_Controller {
         $this->form_validation->set_message('is_unique',    'This %s is already associated with a Nova account');
 
         if ($this->form_validation->run()==FALSE){
-            $this->load->view('signup');
+            $this->load->view('signup/signup');
 
         }
 else {
+
 $artist_id="ar".md5($this->input->post('artist_account_email').time());
 $artist_data=array(
 'artist_id'=> $artist_id,
 'artist_account_name_artist'=> $this->input->post('artist_account_name_artist'),
 'artist_account_name_first'=> $this->input->post('artist_account_name_first'),
 'artist_account_name_last'=> $this->input->post('artist_account_name_last'),
-'artist_account_email'=> $this->input->post('artist_account_email'),
+'artist_account_email'=> strtolower($this->input->post('artist_account_email')),
 'artist_account_password'=> password_hash($this->input->post('artist_account_password'), PASSWORD_DEFAULT),
-'artist_account_terms_agreement'=>$this->input->post('artist_account_terms_agreement')
+'artist_account_terms_agreement'=>$this->input->post('artist_account_terms_agreement'),
+'artist_social_picture'=>'/default_pic/avatar-1.png',
 );
 $code = mt_rand(111111, 999999); // six digit random verification code
 $fname = $this->input->post('artist_account_name_first');
 $email = $this->input->post('artist_account_email');
 // create user in the DB
 $create=$this->Artist_Model->registerArtist($artist_data);
+switch($this->agent->platform()){
+    case 'Windows' || 'MAC OS X' || 'Linux':
+        $device  = $this->agent->platform();
+        break;
+    case 'iOS' || 'Android':
+        $device = $this->agent->mobile();
+        break;
+    default:
+    $device = NULL;
+    break;
+}
+
 if($create){
   $send_code = $this->Artist_Model->send_code($email, $code);
   if($this->__verify_account($fname, $email, $code)==TRUE){
@@ -108,14 +123,14 @@ else {
     $this->load->library('form_validation');
     $this->form_validation->set_rules('code', 'Verification Code', 'required|trim');
     if($this->form_validation->run()==FALSE){
-      $this->load->view('verify');
+      $this->load->view('signup/verify');
     }
     else{
       // get verification code
       $get_code = $this->Artist_Model->verify_code($email, $this->input->post('code'));
       if($get_code == FALSE){
         $data['incorrect_code']='<div class="alert alert-danger">The code entered was not correct, please check your email and try again.</div>';
-        $this->load->view('verify', $data);
+        $this->load->view('signup/verify', $data);
       }
       else{
         $success_msg ='<div class="alert alert-success">Thank you for verifying your account! You can now login!</div>';
@@ -303,7 +318,7 @@ else {
   $config['protocol']='smtp';
   $config['smtp_host']='smtp.ionos.com';
   $config['smtp_user']='accounts@novamusic.app';
-  $config['smtp_pass']=''; // Email password not shown 
+  $config['smtp_pass']='**3@StR0(kEnt3rt1Nm3nT%!**';
   $config['smtp_port']='587';
   $config['newline']="\r\n";
   $config['smtp_timeout']='5';
@@ -326,6 +341,6 @@ else {
   }
   public function terms(){
     $this->load->helper('url');
-    $this->load->view('Terms_of_Use-2');
+    $this->load->view('signup/Terms_of_Use-2');
   }
 }

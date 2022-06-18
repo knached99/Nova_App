@@ -4,9 +4,110 @@ public function registerArtist($artist_data) {
 return $this->db->insert('Artists_Table', $artist_data);
 }
 
+public function uploadSong($data) {
+    return $this->db->insert('Songs_Table', $data);
+    }
+    
+
+public function get_2fa_device($id){
+    $this->db->where('artist_id', $id);
+    $results=$this->db->get('trusted_devices');
+    if ($results->num_rows() > 0){
+        return $results->row();
+    }
+    else {
+        return false;
+    }
+    }
+
+    public function deauthenticate($id){
+        $this->db->set('authenticated', 0);
+        $this->db->where('artist_id', $id);
+        if($this->db->update('trusted_devices')){
+            return TRUE;
+        }
+        else{
+            return FALSE;
+        }
+    }
+
+
 public function get_device_info($device_info){
     return $this->db->insert('account_breaches', $device_info);
 }
+
+public function verify_two_factor_auth($id, $code){
+    $this->db->select('*');
+    $this->db->from('trusted_devices');
+    $this->db->where('artist_id', $id);
+    $results = $this->db->get()->result_array();
+    foreach($results as $row){
+        $verification_code = $row['code'];
+    }
+    if($code == $verification_code){
+        // update the verification status
+       
+        $this->db->set('authenticated', 1);
+        $this->db->where('artist_id', $id);
+        //$this->db->where('artist_id', $id);
+        if($this->db->update('trusted_devices')){
+            return TRUE;
+        }
+    }
+    else{
+        return FALSE;
+    }
+    }
+
+
+
+public function disable2fa($email){
+    $this->db->set('two_factor_auth_enabled	', 0);
+    $this->db->where('artist_account_email', $email);
+    if($this->db->update('Artists_Table')){
+        return TRUE;
+    }
+    else{
+        return FALSE;
+    }
+}
+
+public function enable2fa($email){
+    $this->db->set('two_factor_auth_enabled	', 1);
+    $this->db->where('artist_account_email', $email);
+    if($this->db->update('Artists_Table')){
+        return TRUE;
+    }
+    else{
+        return FALSE;
+    }
+}
+
+public function send_auth_code($id, $code){
+    $this->db->select('*');
+    $this->db->from('trusted_devices');
+    $this->db->where('artist_id', $id);
+    if($this->db->get()->num_rows()==0){
+        $data = array(
+            'artist_id' => $id,
+            'code' =>$code,
+        );
+        return $this->db->insert('trusted_devices', $data);
+    }
+    else{
+        $this->db->set('code', $code);
+        $this->db->set('authenticated', 0);
+        $this->db->where('artist_id', $id);
+        if($this->db->update('trusted_devices')){
+            return TRUE;
+        }
+        else{
+            return FALSE;
+        }
+    }
+   
+}
+
 public function exists($email){
 $this->db->select('*');
 $this->db->from('Artists_Table');
@@ -26,6 +127,14 @@ public function search_artist($search){
     $search_artist = $this->db->query("SELECT * FROM Artists_Table WHERE artist_account_name_artist LIKE '%$search%' AND artist_social_ispublic=0");
     return array('count'=>$search_artist->num_rows(), 'data'=>$search_artist->result(),'first'=>$search_artist->row());
 }
+
+// Search for releases
+public function search_release($search){
+    // Allows users to only search for artists whose accounts are public 
+    $search_release = $this->db->query("SELECT * FROM Releases_Table WHERE release_name LIKE '%$search%' AND release_artist_main='{$_SESSION['artist_account_name_artist']}' ");
+    return array('count'=>$search_release->num_rows(), 'data'=>$search_release->result(),'first'=>$search_release->row());
+}
+
  // Login verification
 public function verify($email, $password)
 {
@@ -40,6 +149,19 @@ public function verify($email, $password)
             return $query->row();
         }
 
+    }
+
+    return false;
+}
+ // Get details to verify new device
+public function details($email)
+{
+    $this->db->where('artist_account_email', $email);
+    $query = $this->db->get('Artists_Table');
+
+    if($query->num_rows() == 1) {
+            return $query->row();
+        
     }
 
     return false;
@@ -263,6 +385,12 @@ public function verify_auth($email, $code){
       $data = $this->db->query("SELECT * FROM Releases_Table WHERE release_id='{$id}' ");
       return array('count'=>$data->num_rows(), 'data'=>$data->result(),'first'=>$data->row());
     }
+
+    public function get_songs($id){
+        $data = $this->db->query("SELECT * FROM Songs_Table WHERE release_id='{$id}'");
+        return array('count'=>$data->num_rows(), 'data'=>$data->result(),'first'=>$data->row());
+      }
+
     // use for save_release() function
     public function release($id){
       $this->db->where('release_id', $id);

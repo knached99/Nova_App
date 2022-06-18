@@ -8,7 +8,7 @@ $route['editsocial'] = 'Dash/edit_social';
 $route['wallet'] = 'Dash/wallet';
 $route['lyrics'] = 'Dash/lyrics';
 $route['releases'] = 'Dash/releases';
-$route['createrelease'] = 'Dash/create_release';
+$route['createrelease'] = 'Dash/release_create';
 $route['lyrics'] = 'Dash/lyrics';
 $route['analytics'] = 'Dash/analytics';
 $route['deals'] = 'Dash/deals';
@@ -17,6 +17,7 @@ $route['lyrics'] = 'Dash/lyrics';
 $route['collaborations'] = 'Dash/collaborations';
 $route['opportunities'] = 'Dash/opportunities';
 $route['search_artist'] = 'Dash/search_artist';
+$route['search_releases'] = 'Dash/search_releases';
 
 $route['trending'] = 'Dash/trending';
 $route['artists'] = 'Dash/artists';

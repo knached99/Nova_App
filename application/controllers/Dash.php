@@ -17,25 +17,26 @@ class Dash extends CI_Controller {
 		$data['releases']=$this->Artist_Model->get_releases($_SESSION['artist_account_name_artist']);
 		$data['notifications']=$this->Notifications_Model->get_notifications($_SESSION['artist_account_email']);
 		$data['msgs']=$this->Notifications_Model->get_messages($_SESSION['artist_account_email']);
-	  $this->load->view('header');
-		$this->load->view('navbar', $data);
-		$this->load->view('sidebar');
-		$this->load->view('dash', $data);
-		$this->load->view('footer');
+	    $this->load->view('heading/header');
+		$this->load->view('heading/navbar', $data);
+		$this->load->view('dash/sidebar');
+		$this->load->view('dash/dash', $data);
+		$this->load->view('footing/footer');
 
 	}
 
 	public function releases(){
 		$this->load->model('Artist_Model');
 		$this->load->model('Notifications_Model');
+		$this->load->helper('form');
 		$data['releases']=$this->Artist_Model->releases($_SESSION['artist_account_name_artist']);
 		$data['notifications']=$this->Notifications_Model->get_notifications($_SESSION['artist_account_email']);
 		$data['msgs']=$this->Notifications_Model->get_messages($_SESSION['artist_account_email']);
-		$this->load->view('header');
-	 $this->load->view('navbar', $data);
-	 $this->load->view('sidebar');
-	 $this->load->view('releases', $data);
-	 $this->load->view('footer');
+		$this->load->view('heading/header');
+		$this->load->view('heading/navbar', $data);
+		$this->load->view('dash/sidebar');;
+	 $this->load->view('dash/releases', $data);
+	 $this->load->view('footing/footer');
 
 	}
 	public function release_create()
@@ -50,11 +51,11 @@ class Dash extends CI_Controller {
 		$this->form_validation->set_rules('release_genre', 'Release Genre', 'required', array('required'=>'release genre is required'));
 		$this->form_validation->set_rules('release_type', 'Release Type', 'required', array('required'=>'release type is required'));
 		if($this->form_validation->run()==FALSE){
-			$this->load->view('header');
-			$this->load->view('navbar', $data);
-			$this->load->view('sidebar');
-			$this->load->view('release_create');
-			$this->load->view('footer');
+			$this->load->view('heading/header');
+			$this->load->view('heading/navbar', $data);
+			$this->load->view('dash/sidebar');
+			$this->load->view('dash/release_create');
+			$this->load->view('footing/footer');
 		}
 		else{
 			$release_id = md5($_SESSION['artist_account_email'].time());
@@ -75,11 +76,11 @@ class Dash extends CI_Controller {
 			}
 			else{
 				$data['err']='<div class="alert alert-danger">There was a problem uploading your release</div>';
-				$this->load->view('header');
-				$this->load->view('navbar', $data);
-				$this->load->view('sidebar');
-				$this->load->view('release_edit', $data);
-				$this->load->view('footer');
+				$this->load->view('heading/header');
+				$this->load->view('heading/navbar', $data);
+				$this->load->view('dash/sidebar');
+				$this->load->view('dash/release_edit', $data);
+				$this->load->view('footing/footer');
 			}
 
 		}
@@ -93,20 +94,21 @@ class Dash extends CI_Controller {
 		$data['notifications']=$this->Notifications_Model->get_notifications($_SESSION['artist_account_email']);
 		$data['msgs']=$this->Notifications_Model->get_messages($_SESSION['artist_account_email']);
 		$data['release']=$this->Artist_Model->get_release($id);
+		$data['songs']=$this->Artist_Model->get_songs($id);
 		$release = $this->Artist_Model->release($id);
 		if($release->release_artist_main !== $_SESSION['artist_account_name_artist']){
-			$this->load->view('header');
-			$this->load->view('navbar', $data);
-			$this->load->view('sidebar');
-			$this->load->view('release_edit');
-			$this->load->view('footer');
+			$this->load->view('heading/header');
+			$this->load->view('heading/navbar', $data);
+			$this->load->view('dash/sidebar');
+			$this->load->view('dash/release_edit');
+			$this->load->view('footing/footer');
 		}
 		else{
-			$this->load->view('header');
-			$this->load->view('navbar', $data);
-			$this->load->view('sidebar');
-			$this->load->view('release_edit');
-			$this->load->view('footer');
+			$this->load->view('heading/header');
+			$this->load->view('heading/navbar', $data);
+			$this->load->view('dash/sidebar');
+			$this->load->view('dash/release_edit');
+			$this->load->view('footing/footer');
 		}
 
 
@@ -125,19 +127,28 @@ class Dash extends CI_Controller {
 			 ban of your account
 		 	 </div>'; // Build functionality to notify administrators 
 			$this->session->set_flashdata('violation', $violation);
-			redirect('./Dash/releases');
+			redirect('./releases');
+		}
+		else if($release->release_status=='In Review'){
+			$in_review = '<div class="alert alert-warning alert-dismissible fade show" role="alert">
+			<i class="fa fa-exclamation-circle fa-lg"></i> 
+			You cannot delete this release because it is currently locked. Once the administrator completes review of this
+			release, you can modify it.
+		 	 </div>';
+			  $this->session->set_flashdata('in_review', $in_review);
+			  redirect('.Dash/release_edit/'.$id.'');
 		}
 		else{
 
 		}
 		$del_release = $this->Artist_Model->delete_release($id);
 		if($del_release){
-			redirect('./Dash/releases');
+			redirect('./releases');
 		}
 		else{
 			$err ='<div class="alert alert-danger">Error deleting release with id '.$id.' </div>';
 			$this->session->set_flashdata('err', $err);
-			redirect('./Dash/releases');
+			redirect('./releases');
 		}
 		
 	}
@@ -203,16 +214,20 @@ class Dash extends CI_Controller {
 			$this->session->set_flashdata('err', $err);
 			redirect('./Dash/release_edit/'.$id.'');
 		}
+		
 		else{
-			$release_art = $this->Artist_Model->release($id)->release_artwork;
 			$uploadData = $this->upload->data();
 			$release_artwork =  '/releases/artwork/'.$uploadData['file_name'];
-			 if(implode('', $uploadData)=='./releases/artwork/./releases/artwork/'){
-			   $artwork = $release_art;
-			 }
-			else{
-			  $artwork = $release_artwork;
+			// implode converts array to a string. 
+			if(implode('', $uploadData)=='./releases/artwork/./releases/artwork/'){
+				$artwork = $release->release_artwork;
 			}
+		
+			else{
+				$artwork = $release_artwork;
+			}
+			 
+			
 			$data = array(
 				'release_id'=>$id,
 				'release_artwork'=> $artwork,
@@ -237,8 +252,93 @@ class Dash extends CI_Controller {
 				</div>';
 				$this->session->set_flashdata('update_err', $update_err);
 				redirect('./Dash/release_edit/'.$id.'');
+			}	
+			
+		
+		} 
+	}
+	public function addSong($id){
+		$this->load->helper(array('url', 'form'));
+		$this->load->model('Artist_Model');
+		$release = $this->Artist_Model->release($id);
+		$config['upload_path']          = './songs';
+		$config['allowed_types']        = 'mp3';
+		$config['max_size']             = 5000;
+		$config['file_name']=$_FILES['song_file']['name'];
+		$data['id']=$id;
+		$this->load->library('upload', $config);
+		$this->upload->initialize($config);
+		$this->load->library('form_validation');
+		$this->form_validation->set_rules('song_title', 'Song Title', 'required', array('required'=>'Song title is required'));
+		$this->form_validation->set_rules('song_rating', 'Song Rating', 'required', array('required'=>'Song rating is required'));
+		//$this->form_validation->set_rules('song_file', 'Music File', 'required', array('required'=>'Music file is required'));
+		if($this->form_validation->run()==FALSE){
+			$validation_errs = validation_errors();
+			$this->session->set_flashdata('validation_errs', $validation_errs);
+			redirect('./Dash/release_edit/'.$id.'');
+		}
+		
+		else{
+			$uploadData = $this->upload->data();
+			$song =  '/songs/'.$uploadData['file_name']; 
+			 
+			
+			$data = array(
+				'release_id'=>$release->release_id,
+				'artist_id'=>$this->session->artist_id,
+				'song_id'=>md5(time().date('yyy-mm-dddd').$this->session->artist_id),
+				'song_file'=> $song,
+				'song_rating'=>$this->input->post('song_rating'),
+				'song_title'=>$this->input->post('song_title'),
+				'song_genre'=>$release->release_genre,
+				'song_artist_featured_1_name_artist	'=>$this->session->artist_account_name_artist,
+				'song_artist_featured_1_name_first'=>$this->session->artist_account_name_first,
+				'song_artist_featured_1_name_last'=>$this->session->artist_account_name_last
+			);
+			$uploadSong = $this->Artist_Model->uploadSong($data);
+			$upload_song = $this->upload->do_upload('song_file');
+			if($uploadSong && $upload_song == TRUE){
+				$success = '<div class="alert alert-success">Your track has been added <i class="fa fa-check-circle"></i></div>';
+				$this->session->set_flashdata('track_upload_success', $success);
+				redirect('./Dash/release_edit/'.$id.'');
 			}
-
+			else{
+				
+				$upload_err ='<div class="alert alert-warning">We were unable to add your song <i class="fa fa-exclamation-circle"></i>
+				</div>';
+				$this->session->set_flashdata('track_upload_err', $upload_err);
+				redirect('./Dash/release_edit/'.$id.'');
+			}	
+			
+		
+		} 
+	}
+	// Enable or disable trusted devices feature 
+	public function two_factor_auth(){
+		$this->load->helper(array('url', 'form'));
+		$this->load->model('Artist_Model');
+		$data = array(
+			'two_factor_auth_enabled'=>$this->input->post('2fa')
+		);
+		if($this->input->post('2fa') == 0){
+			// Disable 2FA 
+			if($this->Artist_Model->disable2fa($this->session->artist_account_email) == TRUE){
+				$this->session->unset_userdata($data);
+				$this->session->set_userdata($data);
+				$disable_2fa = '<div class="alert alert-info">Two-factor authentication has been disabled </div>';
+				$this->session->set_flashdata('disable_2fa', $disable_2fa);
+				redirect('./Dash/edit_profile');
+			}
+			
+		}
+		else if($this->input->post('2fa')==1){
+			if($this->Artist_Model->enable2fa($this->session->artist_account_email) == TRUE){
+				$this->session->unset_userdata($data);
+				$this->session->set_userdata($data);
+				$enable_2fa = '<div class="alert alert-success">Two-factor authentication has been enabled </div>';
+				$this->session->set_flashdata('enable_2fa', $enable_2fa);
+				redirect('./Dash/edit_profile');
+			}
 		}
 	}
 
@@ -249,11 +349,11 @@ class Dash extends CI_Controller {
 		$data['notifications']=$this->Notifications_Model->get_notifications($_SESSION['artist_account_email']);
 		$data['msgs']=$this->Notifications_Model->get_messages($_SESSION['artist_account_email']);
 		$data['all_notifications']=$this->Notifications_Model->get_all_notifications($_SESSION['artist_account_email']);
-	  	$this->load->view('header');
-		$this->load->view('navbar', $data);
-		$this->load->view('sidebar');
-		$this->load->view('allnotifications', $data);
-		$this->load->view('footer');
+		$this->load->view('heading/header');
+		$this->load->view('heading/navbar', $data);
+		$this->load->view('dash/sidebar');
+		$this->load->view('dash/allnotifications', $data);
+		$this->load->view('footing/footer');
 
 	}
 
@@ -301,11 +401,11 @@ public function del_notifications($email){
 		$this->load->model('Notifications_Model');
 			$data['notifications']=$this->Notifications_Model->get_notifications($_SESSION['artist_account_email']);
 			$data['msgs']=$this->Notifications_Model->get_messages($_SESSION['artist_account_email']);
-		  $this->load->view('header');
-			$this->load->view('navbar', $data);
-			$this->load->view('sidebar');
-			$this->load->view('wallet');
-			$this->load->view('footer');
+			$this->load->view('heading/header');
+			$this->load->view('heading/navbar', $data);
+			$this->load->view('dash/sidebar');
+			$this->load->view('dash/wallet');
+			$this->load->view('footing/footer');
 	}
 	public function lyrics(){
 		$this->load->model('Artist_Model');
@@ -313,11 +413,11 @@ public function del_notifications($email){
 		$this->load->model('Notifications_Model');
 			$data['notifications']=$this->Notifications_Model->get_notifications($_SESSION['artist_account_email']);
 			$data['msgs']=$this->Notifications_Model->get_messages($_SESSION['artist_account_email']);
-		  $this->load->view('header');
-			$this->load->view('navbar', $data);
-			$this->load->view('sidebar');
-			$this->load->view('lyrics');
-			$this->load->view('footer');
+			$this->load->view('heading/header');
+			$this->load->view('heading/navbar', $data);
+			$this->load->view('dash/sidebar');
+			$this->load->view('dash/lyrics');
+			$this->load->view('footing/footer');
 	}
 	public function artists(){
 		$this->load->model('Notifications_Model');
@@ -326,22 +426,22 @@ public function del_notifications($email){
 		$data['notifications']=$this->Notifications_Model->get_notifications($_SESSION['artist_account_email']);
 		$data['msgs']=$this->Notifications_Model->get_messages($_SESSION['artist_account_email']);
 		$data['results']=$this->Artist_Model->get_artists();
-		$this->load->view('header');
-		$this->load->view('navbar',$data);
-		$this->load->view('sidebar');
-		$this->load->view('artists', $data);
-		$this->load->view('footer');
+		$this->load->view('heading/header');
+		$this->load->view('heading/navbar', $data);
+		$this->load->view('dash/sidebar');
+		$this->load->view('dash/artists', $data);
+		$this->load->view('footing/footer');
 	}
 	public function engineering(){
 		$this->load->model('Artist_Model');
 		$this->load->model('Notifications_Model');
 		$data['notifications']=$this->Notifications_Model->get_notifications($_SESSION['artist_account_email']);
 		$data['msgs']=$this->Notifications_Model->get_messages($_SESSION['artist_account_email']);
-		$this->load->view('header');
-		$this->load->view('navbar', $data);
-		$this->load->view('sidebar');
-		$this->load->view('engineering');
-		$this->load->view('footer');
+		$this->load->view('heading/header');
+		$this->load->view('heading/navbar', $data);
+		$this->load->view('dash/sidebar');
+		$this->load->view('dash/engineering');
+		$this->load->view('footing/footer');
 	}
 	public function verificationprogram(){
 		$this->load->model('Notifications_Model');
@@ -349,23 +449,22 @@ public function del_notifications($email){
 			$data['msgs']=$this->Notifications_Model->get_messages($_SESSION['artist_account_email']);
 
 		$this->load->model('Artist_Model');
-		$this->load->view('header');
-		$this->load->view('navbar', $data);
-		$this->load->view('sidebar');
-		$this->load->view('verificationprogram');
-		$this->load->view('footer');
+		$this->load->view('heading/header');
+		$this->load->view('heading/navbar', $data);
+		$this->load->view('dash/sidebar');
+		$this->load->view('dash/verificationprogram');
+		$this->load->view('footing/footer');
 	}
 	public function admindash(){
 		$this->load->model('Artist_Model');
 		$this->load->model('Notifications_Model');
 			$data['notifications']=$this->Notifications_Model->get_notifications($_SESSION['artist_account_email']);
 			$data['msgs']=$this->Notifications_Model->get_messages($_SESSION['artist_account_email']);
-
-		$this->load->view('header');
-		$this->load->view('navbar', $data);
-		$this->load->view('sidebar');
-		$this->load->view('admin_dash');
-		$this->load->view('footer');
+			$this->load->view('heading/header');
+			$this->load->view('heading/navbar', $data);
+			$this->load->view('dash/sidebar');
+		$this->load->view('dash/admin_dash');
+		$this->load->view('footing/footer');
 	}
 	public function artist($id){
 		$this->load->model('Artist_Model');
@@ -377,11 +476,11 @@ public function del_notifications($email){
 		$this->load->model('Notifications_Model');
 		$data['notifications']=$this->Notifications_Model->get_notifications($_SESSION['artist_account_email']);
 		$data['msgs']=$this->Notifications_Model->get_messages($_SESSION['artist_account_email']);
-		$this->load->view('header');
-		$this->load->view('navbar', $data);
-		$this->load->view('sidebar');
-		$this->load->view('artist', $data);
-		$this->load->view('footer');
+		$this->load->view('heading/header');
+		$this->load->view('heading/navbar', $data);
+		$this->load->view('dash/sidebar');
+		$this->load->view('dash/artist', $data);
+		$this->load->view('footing/footer');
 	}
 	public function search_artist(){
 		$this->load->model('Artist_Model');
@@ -391,7 +490,7 @@ public function del_notifications($email){
 		if($this->form_validation->run()==FALSE){
 			$err_msg = validation_errors('<div class="alert alert-danger alert-dismissible fade show" role="alert"><button type="button" class="btn-close" data-bs-dismiss="alert"></button>', '</div>');
 			$this->session->set_flashdata('err', $err_msg);
-			redirect('./Dash/artists');
+			redirect('../index.php/artists');
 		}
 		else{
 			// search for the artist
@@ -400,14 +499,39 @@ public function del_notifications($email){
 				$data['msgs']=$this->Notifications_Model->get_messages($_SESSION['artist_account_email']);
 				$data['results_msg'] = '<p class="text-dark fw-normal">The following results matched your search for <b class="text-primary">'.$this->input->post('search').'</b></p>';
 				$data['search'] = $this->Artist_Model->search_artist($this->input->post('search'));
-			$this->load->view('header');
-			$this->load->view('navbar', $data);
-			$this->load->view('search_artist', $data);
-			$this->load->view('footer');
+				$this->load->view('heading/header');
+				$this->load->view('heading/navbar', $data);
+				$this->load->view('dash/sidebar');
+			$this->load->view('dash/search_artist', $data);
+			$this->load->view('footing/footer');
 		}
 	}
 
 
+	public function search_releases(){
+		$this->load->model('Artist_Model');
+		$this->load->model('Notifications_Model');
+		$data['notifications']=$this->Notifications_Model->get_notifications($_SESSION['artist_account_email']);
+		$data['msgs']=$this->Notifications_Model->get_messages($_SESSION['artist_account_email']);
+		$this->load->library('form_validation');
+		$this->load->helper('url');
+		$this->form_validation->set_rules('search', 'Search', 'required', array('required'=>'You have not typed anything to search..'));
+		//$this->form_validation->set_rules('search', 'search', 'required', array('required'=>'You haven\'t typed anything to search..'));
+		if($this->form_validation->run()==FALSE){
+			$err_msg = validation_errors('<div class="alert alert-danger alert-dismissible fade show" role="alert"><button type="button" class="btn-close" data-bs-dismiss="alert"></button>', '</div>');
+			$this->session->set_flashdata('err_msg', $err_msg);
+			redirect('./Dash/releases');
+		}
+		else{
+			$data['results_msg'] = '<p class="text-dark fw-normal">The following results matched your search for <b class="text-primary">'.$this->input->post('search').'</b></p>';
+			$data['search'] = $this->Artist_Model->search_release($this->input->post('search'));
+			$this->load->view('heading/header');
+			$this->load->view('heading/navbar', $data);
+			$this->load->view('dash/sidebar');
+			$this->load->view('dash/search_release', $data);
+			$this->load->view('footing/footer');
+	}
+}
 public function edit_profile(){
 	$this->load->model('Notifications_Model');
 		$data['notifications']=$this->Notifications_Model->get_notifications($_SESSION['artist_account_email']);
@@ -421,11 +545,11 @@ public function edit_profile(){
 	$this->form_validation->set_rules('artist_social_public_location', 'Public Location', 'required');
 	$this->form_validation->set_rules('artist_social_biography', 'my bio', 'required');
 	if($this->form_validation->run()==FALSE){
-		$this->load->view('header');
-		$this->load->view('navbar', $data);
-		$this->load->view('sidebar');
-		$this->load->view('edit_profile');
-		$this->load->view('footer');
+		$this->load->view('heading/header');
+		$this->load->view('heading/navbar', $data);
+		$this->load->view('dash/sidebar');
+		$this->load->view('dash/edit_profile');
+		$this->load->view('footing/footer');
 	}
 	else{
 		// update profile
@@ -443,11 +567,11 @@ public function edit_profile(){
 			There was a problem updating your profile
 			<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="ii bet"></button>
 			</div>';
-			$this->load->view('header');
-			$this->load->view('navbar', $data);
-			$this->load->view('sidebar');
-			$this->load->view('edit_profile',$data);
-			$this->load->view('footer');
+			$this->load->view('heading/header');
+			$this->load->view('heading/navbar', $data);
+			$this->load->view('dash/sidebar');
+			$this->load->view('dash/edit_profile',$data);
+			$this->load->view('footing/footer');
 		}
 		else{
 			$data['update_success']='<div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
@@ -456,11 +580,11 @@ public function edit_profile(){
 			</div>';
 			$this->session->unset_userdata($artist_data);
 			$this->session->set_userdata($artist_data);
-			$this->load->view('header');
-			$this->load->view('navbar', $data);
-			$this->load->view('sidebar');
-			$this->load->view('edit_profile',$data);
-			$this->load->view('footer');
+			$this->load->view('heading/header');
+			$this->load->view('heading/navbar', $data);
+			$this->load->view('dash/sidebar');
+			$this->load->view('dash/edit_profile',$data);
+			$this->load->view('footing/footer');
 		}
 	}
 }
@@ -474,21 +598,21 @@ public function edit_profile(){
 			$data['msgs']=$this->Notifications_Model->get_messages($_SESSION['artist_account_email']);
 
 		// validation rules
-		$this->form_validation->set_rules('artist_account_email', 'email', 'trim|valid_email', array('valid_email'=>'you need to enter a valid email'));
+		$this->form_validation->set_rules('artist_account_email', 'email', 'trim|valid_email|is_unique[Artists_Table.artist_account_email]', array('valid_email'=>'you need to enter a valid email'));
 		$this->form_validation->set_rules('artist_account_address_zip', 'zipcode', 'trim|numeric|min_length[5]|max_length[5]', array('numeric'=>'zipcode has to be a number', 'min_length'=>'zipcode must be 5 digits long', 'max_length'=>'zipcode cannot be more than 5 digits long'));
+		$this->form_validation->set_message('is_unique',    'This %s is already associated with a Nova account');
 		if($this->form_validation->run()==FALSE){
-			$this->load->view('header');
-
-			$this->load->view('navbar', $data);
-			$this->load->view('sidebar');
-			$this->load->view('editaccount');
+			$this->load->view('heading/header');
+			$this->load->view('heading/navbar', $data);
+			$this->load->view('dash/sidebar');
+			$this->load->view('dash/editaccount');
 		//	$this->load->view('footer');
 
 		}
 		else{
 			// update account with new data
 			$data = array(
-				'artist_account_email'=>$this->input->post('artist_account_email'),
+				'artist_account_email'=>strtolower($this->input->post('artist_account_email')),
 				'artist_account_address_street'=>$this->input->post('artist_account_address_street'),
 				'artist_account_address_unit'=>$this->input->post('artist_account_address_unit'),
 				'artist_account_address_city'=>$this->input->post('artist_account_address_city'),
@@ -503,10 +627,10 @@ public function edit_profile(){
 			  </div>';
 			  $this->session->unset_userdata($data);
 			  $this->session->set_userdata($data);
-			  $this->load->view('header');
-			  $this->load->view('navbar', $data);
-			  $this->load->view('sidebar');
-			  $this->load->view('editaccount',$data);
+			  $this->load->view('heading/header');
+			  $this->load->view('heading/navbar', $data);
+			  $this->load->view('dash/sidebar');
+			  $this->load->view('dash/editaccount',$data);
 		//	  $this->load->view('footer');
 
 			}
@@ -515,10 +639,10 @@ public function edit_profile(){
 				There was a problem updating your account
 				<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="ii bet"></button>
 			  </div>';
-			  $this->load->view('header');
-			  $this->load->view('navbar', $data);
-			  $this->load->view('sidebar');
-			  $this->load->view('editaccount',$data);
+			  $this->load->view('heading/header');
+			  $this->load->view('heading/navbar', $data);
+			  $this->load->view('dash/sidebar');
+			  $this->load->view('dash/editaccount',$data);
 			 // $this->load->view('footer');
 
 			}
@@ -542,11 +666,11 @@ public function edit_profile(){
 		$this->form_validation->set_rules('artist_social_youtube', 'YouTube', 'required', array('required'=>'You did not enter your YouTube profile url'));
 
 		if($this->form_validation->run()==FALSE){
-			$this->load->view('header');
-			$this->load->view('navbar', $data);
-			$this->load->view('sidebar');
-			$this->load->view('edit_social');
-			$this->load->view('footer');
+			$this->load->view('heading/header');
+			$this->load->view('heading/navbar', $data);
+			$this->load->view('dash/sidebar');
+			$this->load->view('dash/edit_social');
+			$this->load->view('footing/footer');
 		}
 		else{
 				// Update their Social Media
@@ -567,11 +691,11 @@ public function edit_profile(){
 			  Something went wrong and we were unable to update your links.
 				<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="ii bet"></button>
 			  </div>';
-			$this->load->view('header');
-			$this->load->view('navbar', $data);
-			$this->load->view('sidebar');
-			$this->load->view('edit_social', $data);
-			$this->load->view('footer');
+			  $this->load->view('heading/header');
+			  $this->load->view('heading/navbar', $data);
+			  $this->load->view('dash/sidebar');
+		      $this->load->view('dash/edit_social', $data);
+			  $this->load->view('footing/footer');
 			}
 			else{
 				$data['update_success']='<div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -580,11 +704,11 @@ public function edit_profile(){
 			  </div>';
 				$this->session->unset_userdata($socials);
 				$this->session->set_userdata($socials);
-			  $this->load->view('header');
-			  $this->load->view('navbar', $data);
-			  $this->load->view('sidebar');
-			  $this->load->view('edit_social', $data);
-			  $this->load->view('footer');
+				$this->load->view('heading/header');
+				$this->load->view('heading/navbar', $data);
+				$this->load->view('dash/sidebar');
+			  $this->load->view('dash/edit_social', $data);
+			  $this->load->view('footing/footer');
 
 			}
 		}
@@ -659,9 +783,9 @@ public function edit_profile(){
 					$this->load->library('upload', $config);
 					$this->upload->initialize($config);
 					if(!$this->upload->do_upload('artist_social_picture')){
-						$err = $this->upload->display_errors();
+						$err = $this->upload->display_errors('<p class="text-danger fw-normal">', ' <i class="fas fa-exclamation-circle"></i></p>');
 						$this->session->set_flashdata('upload_err',$err);
-						 redirect('./Dash/edit_profile');
+						 redirect('./editprofile');
 					}
 					else{
 						//$profile_pic ='/uploads/'.$this->upload->do_upload('artist_social_picture');
@@ -676,26 +800,97 @@ public function edit_profile(){
 						$data = array(
 						 'artist_social_picture'=>$profile_img
 					 );
-
-					 if(empty('./uploads/'.$_SESSION['artist_social_picture']) && $this->session->artist_social_picture == ''){
+					 // If there is no uploaded profile pic, then upload the image the user selected
+					 if($this->session->artist_social_picture =='/default_pic/avatar-1.png'){
+						$this->session->unset_userdata($data);
+						$this->session->set_userdata($data);
+						$this->session->set_flashdata('upload_success', $success);
+						 redirect('./editprofile');
+					 }
+					/* if(empty('./uploads'.$_SESSION['artist_social_picture']) && $this->session->artist_social_picture == ''){
 						$this->session->unset_userdata($data);
 						$this->session->set_userdata($data);
 						 $this->session->set_flashdata('upload_success', $success);
-						 redirect('./Dash/edit_profile');
-					 }
+						 redirect('./editprofile');
+					 } */
 					 else{
-						 // if there is an existing picture, remove it from the uploads folder
+						 // Otherwise if there is an existing picture, remove it from the uploads folder
 						 unlink('./'.$_SESSION['artist_social_picture']);
 						 $this->session->unset_userdata($data);
 						 $this->session->set_userdata($data);
 						 $this->session->set_flashdata('upload_success', $success);
-						 redirect('./Dash/edit_profile');
+						 redirect('./editprofile');
 					 }
 
 					}
 
 	}
+	// Delete trusted device but replace with the one the user is currently using 
+	public function del_trusted_device($id){
+		$this->load->model('Artist_Model');
+		$this->load->library('user_agent');
+		$delete_device = $this->Artist_Model->del_trusted_device($id);
+		if($delete_device){
+			// Get current device details 
+			/*switch($this->agent->platform()){
+				case 'Mac OS X' || 'Windows' || 'Linux':
+					$desktop_platform = $this->agent->platform();
+					$web_browser = $this->agent->browser();
+					$browser_version = $this->agent->version();
+					$ip_addr = $_SERVER['REMOTE_ADDR'];
+					break;
+				default:
+					$desktop_platform = NULL;
+					$web_browser = NULL;
+					$browser_version = NULL;
+					$ip_addr = NULL;
+					break;
+			}
+			switch($this->agent->is_mobile()){
+				case TRUE:
+					$mobile_platform = $this->agent->mobile();
+					$mobile_browser = $this->agent->browser();
+					$mobile_browser_version = $this->agent->version();
+					$mobile_ip_addr = $_SERVER['REMOTE_ADDR'];
+					break;
+				case FALSE:
+					$mobile_platform = NULL;
+					$mobile_browser = NULL;
+					$mobile_browser_version = NULL;
+					$mobile_ip_addr = NULL;
+					break;
+			} */
+			$device_details = array(
+				'artist_id'=>$this->session->artist_id,
+				/*'desktop_platform'=>$desktop_platform,
+				'mobile_platform'=>$mobile_platform,
+				'web_browser'=>$web_browser,
+				'browser_version'=>$browser_version,
+				'mobile_browser'=>$mobile_browser,
+				'mobile_browser_version'=>$mobile_browser_version,
+				'ip_addr'=>$ip_addr,
+				'mobile_ip_addr'=>$mobile_ip_addr,*/
+				'user_agent'=>$this->agent->agent_string(),
+				'trusted'=>1
+			);
+			$this->Artist_Model->register_device($device_details);
+			$device_deleted = '<div class="alert alert-success alert-dismissible fade show" role="alert">
+				Your old device was deleted and replaced with the current one you are using <i class="fa fa-check-circle"></i>
+			<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+		  </div>';
+		  $this->session->set_flashdata('device_deleted', $device_deleted);
+		  redirect('./editprofile');
+		}
+		else{
+			$delete_error = '<div class="alert alert-danger">There was an issue deleting this trusted device <i class="fa fa-exclamation-circle"></i></div>';
+			$this->session->set_flashdata('delete_error', $delete_error);
+			redirect('./editprofile');
+		}
+	}
+
 	public function signout(){
+		$this->load->model('Artist_Model');
+		$this->Artist_Model->deauthenticate($this->session->artist_id);
         if(session_destroy()){
           redirect('../index.php/Login/signin');
         }
