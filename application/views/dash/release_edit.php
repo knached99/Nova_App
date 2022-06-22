@@ -708,8 +708,8 @@ img[alt ="pause-icon"] {
                     <div class="col-xl-3 col-lg-12 col-md-12 col-sm-12 col-12">
                         <div class="row">
                             <div class="">
-                                <div class="card">
-                                    <div class="card-header card-heading bg-secondary">
+                                <div class="card" style="width:350px;">
+                                    <div class="card-header card-heading bg-dark">
                                         <div class="row">
                                             <h3 style="color:white;">Track Manager</h3>
                                           
@@ -723,6 +723,8 @@ img[alt ="pause-icon"] {
                                                         <div class="col-xl-2 col-lg-2 col-md-2 col-sm-2 col-2">
                                                              <?php echo $this->session->flashdata('track_upload_err');?>
                                                             <?php echo $this->session->flashdata('track_upload_success');?>
+                                                            <?php echo $this->session->flashdata('song_deleted');?>
+                                                            <?php echo $this->session->flashdata('delete_err');?>
                                                             <h5 class="text-muted"></h5>
                                                         </div>
                                                         <div class="col-xl-10 col-lg-10 col-md-10 col-sm-10 col-10">
@@ -733,7 +735,8 @@ img[alt ="pause-icon"] {
                                             </div>
                                         </a> -->
                                       
-                                        <div class="player">
+ 
+ <div class="player">
 
 <div class="player__header">
 
@@ -746,7 +749,8 @@ img[alt ="pause-icon"] {
     </button>
 
     <button class="player__button player__button--absolute--center play">
-
+     <!-- Temporary dynamic album cover solution -->
+                                                       
       <img src="http://physical-authority.surge.sh/imgs/icon/play.svg" alt="play-icon">
       <img src="http://physical-authority.surge.sh/imgs/icon/pause.svg" alt="pause-icon">
 
@@ -754,14 +758,19 @@ img[alt ="pause-icon"] {
 
     <div class="slider__content">
         <!-- Need to make these images dynamic. These appear behind the play/pause button -->
-
-      <img class="img slider__img" src="http://physical-authority.surge.sh/imgs/1.jpg" alt="cover">
-      <img class="img slider__img" src="http://physical-authority.surge.sh/imgs/2.jpg" alt="cover">
+        <?php 
+    foreach($songs['data'] as $row){
+        // This will dynamically display the release artwork for each song 
+        echo '<img class="img slider__img" src='.$release_artwork.' alt="cover">';
+    }
+    ?>                                                         
+      
+    <!--  <img class="img slider__img" src="http://physical-authority.surge.sh/imgs/2.jpg" alt="cover">
       <img class="img slider__img" src="http://physical-authority.surge.sh/imgs/3.jpg" alt="cover">
       <img class="img slider__img" src="http://physical-authority.surge.sh/imgs/4.jpg" alt="cover">
       <img class="img slider__img" src="http://physical-authority.surge.sh/imgs/5.jpg" alt="cover">
       <img class="img slider__img" src="http://physical-authority.surge.sh/imgs/6.jpg" alt="cover">
-      <img class="img slider__img" src="http://physical-authority.surge.sh/imgs/7.jpg" alt="cover">
+      <img class="img slider__img" src="http://physical-authority.surge.sh/imgs/7.jpg" alt="cover"> -->
 
     </div>
 
@@ -810,10 +819,10 @@ img[alt ="pause-icon"] {
     
           <b class="player__song-name text-truncate">'.$row->song_title.'</b>
           <span class="flex">
-    
+          
             <span class="player__title">'.$this->session->artist_account_name_artist.'</span>
             <span class="player__song-time"></span>
-    
+          
           </span>
     
         </p>
@@ -824,7 +833,9 @@ img[alt ="pause-icon"] {
         ';
     }
     ?>
-
+      <!--'.form_open('../index.php/Dash/deleteSong/'.$row->song_id.''.$row->song_file.'/'.$release_id.'').'
+            <button class="btn btn-sm text-white" style="background-color:#ff3b65;">Delete</button>
+            '.form_close().' -->
 
 
  
@@ -836,7 +847,7 @@ img[alt ="pause-icon"] {
                                     <div class="card-footer">
                                         <div class="row">
                                             <div class="col-sm-12 d-flex align-items-center justify-content-center">
-                                            <a class="" data-bs-toggle="modal" data-bs-target="#addSong" <?php echo $hidden;?> href="#"><button href="#" class="btn btn-primary btn-sm" style="background-color:">Add Track</button></a>
+                                            <a class="" data-bs-toggle="modal" data-bs-target="#addSong" <?php echo $hidden;?> href="#"><button href="#" class="btn btn-primary btn-md">Add Track</button></a>
                                             </div>
                                         </div>
                                     </div>
@@ -873,55 +884,46 @@ img[alt ="pause-icon"] {
                 </div>
                 </center>
                 <hr>
-                <div class="row">
+                <?php 
+                if(empty($songs['data'])){
+                    echo '  <div class="row">
+                    <div class="col-md-1 col-sm-1 col-1">
+                        <p style="font-size:14px; font-weight:600; color:#949494; margin-top: 0px; margin-bottom: 14px; ">&nbsp; </p>
+                    </div>
+                    <div class="col-md-11 col-sm-11 col-11">
+                        <p class="text-danger fw-normal" style="text-align:left; font-size:14px; font-weight:400; margin-top: 0px; margin-bottom: 14px">No Songs Yet
+                        <span style="float:right;"><i class="fas fa-ellipsis-h" style="color:black"></i></span>
+                        </p>
+                        <hr>
+                    </div>
+                </div>';
+                }
+                else{
+                foreach($songs['data'] as $row){
+                    echo '
+                    <div class="row">
                     <div class="col-md-1 col-sm-1 col-1">
                         <p style="font-size:14px; font-weight:600; color:#949494; margin-top: 0px; margin-bottom: 14px; ">&nbsp; 1</p>
                     </div>
                     <div class="col-md-11 col-sm-11 col-11">
-                        <p style="text-align:left; font-size:14px; font-weight:400; color:#black; margin-top: 0px; margin-bottom: 14px">This is my song
+                        <p style="text-align:left; font-size:14px; font-weight:400; color:#black; margin-top: 0px; margin-bottom: 14px">'.$row->song_title.'
                         <span style="float:right;"><i class="fas fa-ellipsis-h" style="color:black"></i></span>
                         </p>
                         <hr>
                     </div>
                 </div>
-                <div class="row">
-                    <div class="col-md-1 col-sm-1 col-1">
-                        <p style="font-size:14px; font-weight:600; color:#949494; margin-top: 0px; margin-bottom: 14px; ">&nbsp; 2</p>
-                    </div>
-                    <div class="col-md-11 col-sm-11 col-11">
-                        <p style="text-align:left; font-size:14px; font-weight:400; color:#black; margin-top: 0px; margin-bottom: 14px">This is my second song
-                        <span style="float:right;"><i class="fas fa-ellipsis-h" style="color:black"></i></span>
-                        </p>
-                        <hr>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-1 col-sm-1 col-1">
-                        <p style="font-size:14px; font-weight:600; color:#949494; margin-top: 0px; margin-bottom: 14px; ">&nbsp; 3</p>
-                    </div>
-                    <div class="col-md-11 col-sm-11 col-11">
-                        <p style="text-align:left; font-size:14px; font-weight:400; color:#black; margin-top: 0px; margin-bottom: 14px">This is my third song
-                        <span style="float:right;"><i class="fas fa-ellipsis-h" style="color:black"></i></span>
-                        </p>
-                        <hr>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-1 col-sm-1 col-1">
-                        <p style="font-size:14px; font-weight:600; color:#949494; margin-top: 0px; margin-bottom: 14px; ">&nbsp; 4</p>
-                    </div>
-                    <div class="col-md-11 col-sm-11 col-11">
-                        <p style="text-align:left; font-size:14px; font-weight:400; color:#black; margin-top: 0px; margin-bottom: 14px">This is my final song
-                        <span style="float:right;"><i class="fas fa-ellipsis-h" style="color:black"></i></span>
-                        </p>
-                        <hr>
-                    </div>
-                </div>
+                    ';
+                }
+            }
+                ?>
+           
+          
+         
                 <div class="row">
                     <div class="col-md-12">
-                        <p style="font-size:11px; font-weight:500; color:#949494; margin-top: -5px; text-transform: uppercase">March 14, 2022</p>
-                        <p style="font-size:11px; font-weight:500; color:#949494; margin-top: -14px; text-transform: uppercase">4 songs, 35 minutes</p>
-                        <p style="font-size:11px; font-weight:500; color:#949494; margin-top: -14px; text-transform: uppercase">℗ 2022 Nova Music Publishing</p>
+                        <p style="font-size:11px; font-weight:500; color:#949494; margin-top: -5px; text-transform: uppercase"><?php echo $release_date;?></p>
+                        <p style="font-size:11px; font-weight:500; color:#949494; margin-top: -14px; text-transform: uppercase"><?php echo count($songs['data']);?> Songs - album length</p>
+                        <p style="font-size:11px; font-weight:500; color:#949494; margin-top: -14px; text-transform: uppercase">℗ <?php echo DATE('Y'); ?> Nova Music Publishing</p>
                     </div>
                 </div>
             </div>
