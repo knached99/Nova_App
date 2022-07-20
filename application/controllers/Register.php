@@ -317,8 +317,8 @@ else {
   $config['useragent']='CodeIgniter';
   $config['protocol']='smtp';
   $config['smtp_host']='smtp.ionos.com';
-  $config['smtp_user']='accounts@novamusic.app';
-  $config['smtp_pass']='**3@StR0(kEnt3rt1Nm3nT%!**';
+  $config['smtp_user']='';  // not showing email credentials
+  $config['smtp_pass']='' ; // not showing email credentials
   $config['smtp_port']='587';
   $config['newline']="\r\n";
   $config['smtp_timeout']='5';
